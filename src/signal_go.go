@@ -6,7 +6,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
 )
 
@@ -39,12 +38,10 @@ func (g *SignalGo) HandleIncomingMessage(msg Message)  {
 			g.eventClients[payload.Event]=append(g.eventClients[payload.Event],msg.Client)
 			break
 		case 1:
-			data:=CreatePayload(payload.MessageType,payload.Event,payload.Message)
 			for _, client := range g.eventClients[payload.Event] {
-				client.conn.WriteMessage(websocket.BinaryMessage, data)
+				client.Write(payload.MessageType,payload.Event,payload.Message)
 			}
 			break
-
 	}
 }
 
@@ -80,6 +77,10 @@ func (g *SignalGo) Run() {
 			}
 		case message := <-g.messages:
 			g.HandleIncomingMessage(message)
+			total:= len(g.messages)
+			for i := 0; i < total; i++ {
+				g.HandleIncomingMessage(<-g.messages)
+			}
 		}
 	}
 }

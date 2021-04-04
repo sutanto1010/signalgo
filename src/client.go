@@ -46,6 +46,18 @@ type Client struct {
 	send   chan []byte
 }
 
+func (c *Client) Write(messageType int, event string, message string) {
+	data:=CreatePayload(messageType,event,message)
+	w, err:= c.conn.NextWriter(websocket.BinaryMessage)
+	if err !=nil{
+		log.Println(err)
+	}
+	if w!=nil{
+		w.Write(data)
+		w.Close()
+	}
+}
+
 func (c *Client) JoinGroup(group string) {
 	c.hub.groupClients[group]=append(c.hub.groupClients[group], c)
 }
@@ -93,6 +105,7 @@ func (c *Client) writePump() {
 	}()
 	for {
 		select {
+		/*
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -117,6 +130,8 @@ func (c *Client) writePump() {
 			if err := w.Close(); err != nil {
 				return
 			}
+
+		 */
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Signal Go</title>
+<script src="signal-go.js"></script>
+
+<style type="text/css">
+html {
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: gray;
+}
+
+#log {
+    background: white;
+    margin: 0;
+    padding: 0.5em 0.5em 0.5em 0.5em;
+    position: absolute;
+    top: 0.5em;
+    left: 0.5em;
+    right: 0.5em;
+    bottom: 3em;
+    overflow: auto;
+}
+
+#form {
+    padding: 5px 0.5em 0 0.5em;
+    margin: 0;
+    position: absolute;
+    bottom: 1em;
+    left: 0px;
+    width: 100%;
+    overflow: hidden;
+    background: gray;
+}
+
+</style>
+
+</head>
+<body>
+<div id="log"></div>
+<form id="form">
+    <div>
+        <textarea id="msg" style="width: 300px; height: 50px;" ></textarea>
+    </div>
+    <input type="submit" value="Send" />
+</form>
+<script type="text/javascript">
+    let client = new SignalGo()
+    client.On("chat",(message)=>{
+        let item = document.createElement("div");
+        item.innerText = message;
+        let log = document.getElementById("log");
+        log.appendChild(item);
+    })
+    document.getElementById("form").onsubmit = function () {
+        let msg = document.getElementById("msg");
+        client.Send("chat",msg.value);
+        return false
+    };
+    window.onload = function () {
+        client.Connect()
+    };
+</script>
+</body>
+</html>

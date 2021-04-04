@@ -19,3 +19,4 @@ Framework Integrations:
 - [ ] [`gin-gonic/gin`](https://github.com/gin-gonic/gin)
 - [ ] [`go-chi/chi`](https://github.com/go-chi/chi)
 - [ ] [`labstack/echo`](https://github.com/labstack/echo)
+- [ ] [`kataras/iris`](https://github.com/kataras/iris)

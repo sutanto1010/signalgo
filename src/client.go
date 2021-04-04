@@ -41,14 +41,13 @@ var upgrader = websocket.Upgrader{
 
 type Client struct {
 	ID     string
-	Groups []string
 	hub    *SignalGo
 	conn   *websocket.Conn
 	send   chan []byte
 }
 
 func (c *Client) JoinGroup(group string) {
-	c.Groups = append(c.Groups, group)
+	c.hub.groupClients[group]=append(c.hub.groupClients[group], c)
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -65,15 +64,18 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		msgType, message, err := c.conn.ReadMessage()
+		_, body, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		log.Println(msgType)
+		body = bytes.TrimSpace(bytes.Replace(body, newline, space, -1))
+		message:=Message{
+			Client: c,
+			Body:   body,
+		}
 		c.hub.messages <- message
 	}
 }

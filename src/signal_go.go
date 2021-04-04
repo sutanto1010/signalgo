@@ -5,7 +5,8 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log"
 )
 
@@ -16,17 +17,36 @@ type SignalGo struct {
 	clients map[string]*Client
 
 	// Inbound messages from the clients.
-	messages chan []byte
+	messages chan Message
 
 	// Register requests from the clients.
 	register chan *Client
 
 	// Unregister requests from clients.
 	unregister chan *Client
+	groupClients map[string][]*Client
+	eventClients map[string][]*Client
 }
 
-func (g *SignalGo) HandleMessage(msg []byte)  {
-	fmt.Println(string(msg))
+func (g *SignalGo) HandleIncomingMessage(msg Message)  {
+	var payload Payload
+	err := json.Unmarshal(msg.Body, &payload)
+	if err!=nil{
+		log.Println(err)
+	}
+
+	switch payload.MessageType {
+		case 3:
+			g.eventClients[payload.Event]=append(g.eventClients[payload.Event],msg.Client)
+			break
+		case 1:
+			data:=CreatePayload(payload.MessageType,payload.Event,payload.Message)
+			for _, client := range g.eventClients[payload.Event] {
+				client.conn.WriteMessage(websocket.BinaryMessage, data)
+			}
+			break
+
+	}
 }
 
 func (g *SignalGo) SendToUser(connectionId string, message interface{}) {
@@ -38,10 +58,12 @@ func (g *SignalGo) SendToGroup(group string, message interface{}) {
 
 func NewSignalGo() *SignalGo {
 	return &SignalGo{
-		messages:  make(chan []byte),
+		messages:  make(chan Message),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[string]*Client),
+		eventClients: make(map[string][]*Client),
+		groupClients: make(map[string][]*Client),
 	}
 }
 
@@ -58,7 +80,12 @@ func (g *SignalGo) Run() {
 				close(client.send)
 			}
 		case message := <-g.messages:
-			g.HandleMessage(message)
+			g.HandleIncomingMessage(message)
 		}
 	}
+}
+
+type Message struct {
+	Client *Client
+	Body []byte
 }

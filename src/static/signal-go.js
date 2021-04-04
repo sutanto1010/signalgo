@@ -108,8 +108,8 @@ class SignalGo {
 
     registerEvent(key) {
         let payload = {
-            t: 3,
-            e: key
+            "t": 3,
+            "e": key
         }
         this.doSend(payload, "Error on event registration!")
     }
@@ -122,8 +122,8 @@ class SignalGo {
     }
     JoinGroup(group){
         let payload = {
-            t:2,
-            m:group
+            "t":2,
+            "m":group
         }
         this.doSend(payload,"Can't join to any group if connection is not established yet!")
     }
@@ -137,21 +137,18 @@ class SignalGo {
     }
     Send(ev,message){
         let payload = {
-            t:1,
-            m:message,
-            e:ev
+            "t":1,
+            "m":message,
+            "e":ev
         }
-        //let blob = new Blob(JSON.stringify(payload),{type : 'application/json'})
-
         this.doSend(payload,"Can't send message if connection is not established yet!")
-        //this.doSend("aaaa","")
     }
     ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
     }
     str2ab(str) {
-        let buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-        let bufView = new Uint16Array(buf);
+        let buf = new ArrayBuffer(str.length); // 2 bytes for each char
+        let bufView = new Uint8Array(buf);
         for (var i=0, strLen=str.length; i < strLen; i++) {
             bufView[i] = str.charCodeAt(i);
         }

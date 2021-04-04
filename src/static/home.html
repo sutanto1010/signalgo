@@ -55,6 +55,7 @@ body {
 <script type="text/javascript">
     let client = new SignalGo()
     client.On("chat",(message)=>{
+        console.log(message)
         let item = document.createElement("div");
         item.innerText = message;
         let log = document.getElementById("log");

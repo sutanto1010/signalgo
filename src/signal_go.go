@@ -34,7 +34,6 @@ func (g *SignalGo) HandleIncomingMessage(msg Message)  {
 	if err!=nil{
 		log.Println(err)
 	}
-
 	switch payload.MessageType {
 		case 3:
 			g.eventClients[payload.Event]=append(g.eventClients[payload.Event],msg.Client)
@@ -50,10 +49,10 @@ func (g *SignalGo) HandleIncomingMessage(msg Message)  {
 }
 
 func (g *SignalGo) SendToUser(connectionId string, message interface{}) {
-
+	panic("Implement me!")
 }
 func (g *SignalGo) SendToGroup(group string, message interface{}) {
-
+	panic("Implement me!")
 }
 
 func NewSignalGo() *SignalGo {

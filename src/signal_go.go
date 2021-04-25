@@ -1,30 +1,20 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
-
 import (
 	"encoding/json"
 	"log"
 )
-
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
 type SignalGo struct {
 	// Registered clients.
 	clients map[string]*Client
-
 	// Inbound messages from the clients.
 	messages chan Message
-
 	// Register requests from the clients.
 	register chan *Client
-
 	// Unregister requests from clients.
 	unregister chan *Client
 	groupClients map[string][]*Client
 	eventClients map[string][]*Client
+	backplane IBackplane
 }
 
 func (g *SignalGo) HandleIncomingMessage(msg Message)  {
@@ -61,6 +51,10 @@ func NewSignalGo() *SignalGo {
 		eventClients: make(map[string][]*Client),
 		groupClients: make(map[string][]*Client),
 	}
+}
+
+func (g *SignalGo) UseBackplane(backplane IBackplane)  {
+	g.backplane=backplane
 }
 
 func (g *SignalGo) Run() {

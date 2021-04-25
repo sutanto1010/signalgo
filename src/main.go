@@ -37,11 +37,11 @@ func serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	hub := NewSignalGo()
-	go hub.Run()
+	signalGo := NewSignalGo()
+	go signalGo.Run()
 	http.HandleFunc("/", serveStaticFiles)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		serveWs(signalGo, w, r)
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

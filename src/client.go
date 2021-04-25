@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -74,7 +75,10 @@ func (c *Client) readPump() {
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	c.conn.SetPongHandler(func(string) error {
+		c.conn.SetReadDeadline(time.Now().Add(pongWait));
+		return nil
+	})
 	for {
 		_, body, err := c.conn.ReadMessage()
 		if err != nil {
@@ -100,12 +104,13 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		fmt.Println("Closing connection")
 		ticker.Stop()
 		c.conn.Close()
 	}()
 	for {
 		select {
-		/*
+
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -131,10 +136,13 @@ func (c *Client) writePump() {
 				return
 			}
 
-		 */
+
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			var t time.Time
+			c.conn.SetWriteDeadline(t)
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+
 				return
 			}
 		}
@@ -163,7 +171,18 @@ func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-
+	conn.SetCloseHandler(func(code int, text string) error {
+		fmt.Println("On SetCloseHandler")
+		return nil
+	})
+	conn.SetPingHandler(func(appData string) error {
+		fmt.Println("On SetPingHandler")
+		return nil
+	})
+	conn.SetPongHandler(func(appData string) error {
+		fmt.Println("On SetPongHandler")
+		return nil
+	})
 	client := &Client{
 		ID:   id,
 		hub:  hub,

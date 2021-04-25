@@ -3,7 +3,7 @@ class SignalGo {
     id=null
     connected=false
     options={
-        url:"localhost:9099/ws",
+        url:location.hostname+":"+location.port+"/ws",
         autoRetry:true,
         autoRetryInMs:500,
     }

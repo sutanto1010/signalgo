@@ -1,7 +1,7 @@
 package main
 
 type IBackplane interface {
-	Start()
+	Init(sg *SignalGo)
 	OnMessage(message Message)
 	OnRegister(client *Client)
 	OnUnRegister(client *Client)

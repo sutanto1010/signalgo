@@ -53,7 +53,7 @@ func (c *Client) Clode() {
 	c.hub.CloseClient(c)
 }
 
-func (c *Client) Write(messageType int, event string, message string) {
+func (c *Client) Write(messageType MessageType, event string, message string) {
 	data := CreatePayload(messageType, event, message)
 	w, err := c.conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
@@ -162,6 +162,11 @@ func (c *Client) SendID() {
 	}
 }
 
+func NewID() string {
+	idGenerator := fastuuid.MustNewGenerator()
+	return idGenerator.Hex128()
+}
+
 // serveWs handles websocket requests from the peer.
 
 func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
@@ -169,8 +174,7 @@ func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	isNewConnection := id == ""
 	if id == "" {
-		idGenerator := fastuuid.MustNewGenerator()
-		id = idGenerator.Hex128()
+		id = NewID()
 	}
 	if err != nil {
 		log.Println(err)
@@ -206,7 +210,7 @@ func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePayload(
-	messageType int,
+	messageType MessageType,
 	event string,
 	body interface{}) []byte {
 	msgBody, _ := json.Marshal(body)
@@ -219,13 +223,22 @@ func CreatePayload(
 	return data
 }
 
+type MessageType int
+
+const (
+	RegisterMessage MessageType = iota
+	UserMessage
+	GroupRegistration
+	EventRegistration
+)
+
 type Payload struct {
 	//0=Register (System)
 	//1=Message
 	//2=Group
 	//3=Event Registration
-	MessageType int    `json:"t"`
-	Event       string `json:"e"`
+	MessageType MessageType `json:"t"`
+	Event       string      `json:"e"`
 	//Can be message OR group name
 	Message string `json:"m"`
 }

@@ -39,8 +39,9 @@ func serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 	signalGo := NewSignalGo()
-	// redisBackPlane := NewRedisBackplane("localhost", "", 5, false)
-	// signalGo.UseBackplane(&redisBackPlane)
+	redisBackPlane := NewRedisBackplane("localhost:6379", "", 5, false)
+	redisBackPlane.Init(signalGo)
+	signalGo.UseBackplane(&redisBackPlane)
 	go signalGo.Run()
 	http.HandleFunc("/", serveStaticFiles)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {

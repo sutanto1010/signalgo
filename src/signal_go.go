@@ -6,6 +6,7 @@ import (
 )
 
 type SignalGo struct {
+	SignalGoInstanceID string
 	// Registered clients.
 	clients map[string]*Client
 	// Inbound messages from the clients.
@@ -64,12 +65,13 @@ func (g *SignalGo) SendToGroup(group string, message interface{}) {
 
 func NewSignalGo() *SignalGo {
 	return &SignalGo{
-		messages:     make(chan Message),
-		register:     make(chan *Client),
-		unregister:   make(chan *Client),
-		clients:      make(map[string]*Client),
-		eventClients: make(map[string][]*Client),
-		groupClients: make(map[string][]*Client),
+		SignalGoInstanceID: NewID(),
+		messages:           make(chan Message),
+		register:           make(chan *Client),
+		unregister:         make(chan *Client),
+		clients:            make(map[string]*Client),
+		eventClients:       make(map[string][]*Client),
+		groupClients:       make(map[string][]*Client),
 	}
 }
 
@@ -99,6 +101,7 @@ func (g *SignalGo) Run() {
 				g.HandleIncomingMessage(<-g.messages)
 			}
 			if g.backplane != nil {
+				message.SignalGoInstanceID = g.SignalGoInstanceID
 				g.backplane.OnMessage(message)
 			}
 		}
@@ -106,6 +109,7 @@ func (g *SignalGo) Run() {
 }
 
 type Message struct {
-	Client *Client
-	Body   []byte
+	Client             *Client
+	Body               []byte
+	SignalGoInstanceID string
 }

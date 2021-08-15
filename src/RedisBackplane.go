@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -13,18 +16,70 @@ type RedisBackplane struct {
 	DB             int
 	SyncMessageKey string
 	Client         *redis.Client
+	sg             *SignalGo
 }
 
-func (r *RedisBackplane) Start() {
+const (
+	SignalGoOnMessage    = "SignalGo-OnMessage"
+	SignalGoOnUnRegister = "SignalGo-OnUnRegister"
+)
 
+func (r *RedisBackplane) SubscribeOnMessage() {
+	pubsubCtx := context.Background()
+	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnMessage)
+	//pubsub.Receive(context.Background())
+	for msg := range pubsub.Channel() {
+		fmt.Println(msg.Payload)
+	}
+	fmt.Println("SubscribeOnMessage stopped")
+}
+func (r *RedisBackplane) SubscribeOnUnRegister() {
+	pubsubCtx := context.Background()
+	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnUnRegister)
+	//pubsub.Receive(context.Background())
+	for msg := range pubsub.Channel() {
+		var client Client
+		json.Unmarshal([]byte(msg.Payload), &client)
+		cacheKey := client.ID
+		r.del(cacheKey + "*")
+	}
+	fmt.Println("SubscribeOnUnRegister stopped")
+}
+
+func (r *RedisBackplane) Init(sg *SignalGo) {
+	r.sg = sg
+	go r.SubscribeOnMessage()
+	go r.SubscribeOnUnRegister()
+}
+
+func (r *RedisBackplane) set(key string, value interface{}) {
+	payload, _ := json.Marshal(value)
+	r.Client.Set(context.Background(), key, string(payload), 0)
+}
+func (r *RedisBackplane) del(key string) {
+	cmd := r.Client.Keys(context.Background(), key)
+	keys, _ := cmd.Result()
+	for _, k := range keys {
+		r.Client.Del(context.Background(), k)
+	}
 }
 
 func (r *RedisBackplane) OnMessage(message Message) {
-
+	data, _ := json.Marshal(message)
+	var payload Payload
+	err := json.Unmarshal(message.Body, &payload)
+	if err == nil {
+		if payload.MessageType == EventRegistration {
+			cacheKey := message.Client.ID + "-events"
+			r.set(cacheKey, message.Client.Events)
+		}
+	}
+	r.Client.Publish(context.Background(), SignalGoOnMessage, string(data))
 }
 
 func (r *RedisBackplane) OnUnRegister(client *Client) {
-
+	data, _ := json.Marshal(client)
+	r.Client.Publish(context.Background(), SignalGoOnUnRegister, string(data))
 }
 
 func (r *RedisBackplane) OnRegister(client *Client) {

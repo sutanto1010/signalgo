@@ -54,6 +54,10 @@ func (r *RedisBackplane) Init(sg *SignalGo) {
 	go r.SubscribeOnUnRegister()
 }
 
+func (r *RedisBackplane) get(key string) string {
+	return r.Client.Get(context.Background(), key).Val()
+}
+
 func (r *RedisBackplane) set(key string, value interface{}) {
 	payload, _ := json.Marshal(value)
 	r.Client.Set(context.Background(), key, string(payload), 0)
@@ -85,7 +89,14 @@ func (r *RedisBackplane) OnUnRegister(client *Client) {
 }
 
 func (r *RedisBackplane) OnRegister(client *Client) {
-
+	cacheKey := client.ID + "-events"
+	var events []string
+	err := json.Unmarshal([]byte(r.get(cacheKey)), &events)
+	if err == nil {
+		for _, event := range events {
+			r.sg.eventClients[event] = append(r.sg.eventClients[event], client)
+		}
+	}
 }
 
 func NewRedisBackplane(

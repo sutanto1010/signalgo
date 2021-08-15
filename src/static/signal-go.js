@@ -3,8 +3,7 @@ class SignalGo {
     id=null
     connected=false
     options={
-        //url:location.hostname+":"+location.port+"/ws",
-        url:"26idvz710k.execute-api.ap-southeast-1.amazonaws.com/dev?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzbGM1YnFrcGprYzcycG5zMWVnIiwidWlkIjo5LCJlbWFpbCI6InN1dGFudG8uMTAxMEBnbWFpbC5jb20iLCJob3RlbHMiOm51bGwsInJvbGVzIjpudWxsLCJleHAiOiIyMDIxLTA3LTE4VDEwOjA2OjM5LjExNjY4NjU2OVoifQ.VjZgx3DrYiiwN144J1PW_YH8h2xep7RrauoW_4pr1n4",
+        url:location.hostname+":"+location.port+"/ws",
         autoRetry:true,
         autoRetryInMs:500,
     }
@@ -55,7 +54,7 @@ class SignalGo {
                 this.conn.onopen=null
                 this.conn.onmessage=null
             }
-            let conn=new WebSocket(`wss://${this.options.url+idParam}`)
+            let conn=new WebSocket(`ws://${this.options.url+idParam}`)
             conn.onclose=(ev) => {
                 this.log.e("On Close: " + ev)
                 this.connected = false
@@ -67,8 +66,8 @@ class SignalGo {
             }
 
             conn.onmessage=(ev) => {
-                console.log(ev)
-                /*
+                //console.log(ev)
+                
                 let reader = new FileReader()
                 reader.onload=(e)=>{
                     let payload = JSON.parse(e.target.result)
@@ -85,7 +84,7 @@ class SignalGo {
                     this.log.i(body)
                 }
                 reader.readAsText(ev.data)
-                */
+                
             }
             conn.onerror=(ev)=>{
                 this.log.e("On Error: " + ev)
@@ -136,8 +135,9 @@ class SignalGo {
             console.error(err)
             return
         }
-        //let buff=this.str2ab(JSON.stringify(payload))
-        this.conn.send(JSON.stringify(payload))
+        let buff=this.str2ab(JSON.stringify(payload))
+        //this.conn.send(JSON.stringify(payload))
+        this.conn.send(buff)
     }
     Send(ev,message){
         let payload = {

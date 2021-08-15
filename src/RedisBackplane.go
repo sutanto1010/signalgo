@@ -27,16 +27,20 @@ const (
 func (r *RedisBackplane) SubscribeOnMessage() {
 	pubsubCtx := context.Background()
 	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnMessage)
-	//pubsub.Receive(context.Background())
 	for msg := range pubsub.Channel() {
-		fmt.Println(msg.Payload)
+		var message Message
+		err := json.Unmarshal([]byte(msg.Payload), &message)
+		if err == nil {
+			if message.SignalGoInstanceID != r.sg.SignalGoInstanceID {
+				r.sg.HandleIncomingMessage(message)
+			}
+		}
 	}
 	fmt.Println("SubscribeOnMessage stopped")
 }
 func (r *RedisBackplane) SubscribeOnUnRegister() {
 	pubsubCtx := context.Background()
 	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnUnRegister)
-	//pubsub.Receive(context.Background())
 	for msg := range pubsub.Channel() {
 		var client Client
 		json.Unmarshal([]byte(msg.Payload), &client)

@@ -1,8 +1,10 @@
 package main
+
 import (
 	"encoding/json"
 	"log"
 )
+
 type SignalGo struct {
 	// Registered clients.
 	clients map[string]*Client
@@ -11,27 +13,27 @@ type SignalGo struct {
 	// Register requests from the clients.
 	register chan *Client
 	// Unregister requests from clients.
-	unregister chan *Client
+	unregister   chan *Client
 	groupClients map[string][]*Client
 	eventClients map[string][]*Client
-	backplane IBackplane
+	backplane    IBackplane
 }
 
-func (g *SignalGo) HandleIncomingMessage(msg Message)  {
+func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	var payload Payload
 	err := json.Unmarshal(msg.Body, &payload)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 	}
 	switch payload.MessageType {
-		case 3:
-			g.eventClients[payload.Event]=append(g.eventClients[payload.Event],msg.Client)
-			break
-		case 1:
-			for _, client := range g.eventClients[payload.Event] {
-				client.Write(payload.MessageType,payload.Event,payload.Message)
-			}
-			break
+	case 3:
+		g.eventClients[payload.Event] = append(g.eventClients[payload.Event], msg.Client)
+		break
+	case 1:
+		for _, client := range g.eventClients[payload.Event] {
+			client.Write(payload.MessageType, payload.Event, payload.Message)
+		}
+		break
 	}
 }
 
@@ -44,17 +46,17 @@ func (g *SignalGo) SendToGroup(group string, message interface{}) {
 
 func NewSignalGo() *SignalGo {
 	return &SignalGo{
-		messages:  make(chan Message),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[string]*Client),
+		messages:     make(chan Message),
+		register:     make(chan *Client),
+		unregister:   make(chan *Client),
+		clients:      make(map[string]*Client),
 		eventClients: make(map[string][]*Client),
 		groupClients: make(map[string][]*Client),
 	}
 }
 
-func (g *SignalGo) UseBackplane(backplane IBackplane)  {
-	g.backplane=backplane
+func (g *SignalGo) UseBackplane(backplane IBackplane) {
+	g.backplane = backplane
 }
 
 func (g *SignalGo) Run() {
@@ -71,7 +73,7 @@ func (g *SignalGo) Run() {
 			}
 		case message := <-g.messages:
 			g.HandleIncomingMessage(message)
-			total:= len(g.messages)
+			total := len(g.messages)
 			for i := 0; i < total; i++ {
 				g.HandleIncomingMessage(<-g.messages)
 			}
@@ -81,5 +83,5 @@ func (g *SignalGo) Run() {
 
 type Message struct {
 	Client *Client
-	Body []byte
+	Body   []byte
 }

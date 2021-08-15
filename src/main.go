@@ -13,17 +13,18 @@ import (
 
 var addr = flag.String("addr", ":9099", "http service address")
 var mimes = map[string]string{
-	"js":"application/javascript",
-	"css":"text/css",
-	"html":"text/html",
+	"js":   "application/javascript",
+	"css":  "text/css",
+	"html": "text/html",
 }
+
 func serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
-	file:="./static"
-	path:=r.URL.Path
+	file := "./static"
+	path := r.URL.Path
 	if path != "/" {
-		file+=path
-		temp := strings.Split(path,".")
+		file += path
+		temp := strings.Split(path, ".")
 		ext := strings.ToLower(temp[len(temp)-1])
 		w.Header().Set("Content-Type", mimes[ext])
 	}
@@ -38,6 +39,8 @@ func serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 	signalGo := NewSignalGo()
+	redisBackPlane := NewRedisBackplane("localhost", "", 5, false)
+	signalGo.UseBackplane(&redisBackPlane)
 	go signalGo.Run()
 	http.HandleFunc("/", serveStaticFiles)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {

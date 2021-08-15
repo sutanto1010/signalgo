@@ -19,6 +19,23 @@ type SignalGo struct {
 	backplane    IBackplane
 }
 
+func (g *SignalGo) CloseClient(c *Client) {
+	delete(g.clients, c.ID)
+	for _, event := range c.Events {
+		var temp []*Client
+		for _, client := range g.eventClients[event] {
+			if client.ID != c.ID {
+				temp = append(temp, client)
+			}
+		}
+		g.eventClients[event] = temp
+	}
+	close(c.send)
+	if g.backplane != nil {
+		g.backplane.OnUnRegister(c)
+	}
+}
+
 func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	var payload Payload
 	err := json.Unmarshal(msg.Body, &payload)
@@ -28,6 +45,7 @@ func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	switch payload.MessageType {
 	case 3:
 		g.eventClients[payload.Event] = append(g.eventClients[payload.Event], msg.Client)
+		msg.Client.Events = append(msg.Client.Events, payload.Event)
 		break
 	case 1:
 		for _, client := range g.eventClients[payload.Event] {
@@ -65,17 +83,23 @@ func (g *SignalGo) Run() {
 		case client := <-g.register:
 			g.clients[client.ID] = client
 			log.Printf("Register: %v", client.ID)
+			if g.backplane != nil {
+				g.backplane.OnRegister(client)
+			}
 		case client := <-g.unregister:
 			if _, ok := g.clients[client.ID]; ok {
 				log.Printf("Unregister: %v", client.ID)
-				delete(g.clients, client.ID)
-				close(client.send)
+				g.CloseClient(client)
 			}
+
 		case message := <-g.messages:
 			g.HandleIncomingMessage(message)
 			total := len(g.messages)
 			for i := 0; i < total; i++ {
 				g.HandleIncomingMessage(<-g.messages)
+			}
+			if g.backplane != nil {
+				g.backplane.OnMessage(message)
 			}
 		}
 	}

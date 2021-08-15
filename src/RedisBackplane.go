@@ -19,15 +19,15 @@ func (r *RedisBackplane) Start() {
 
 }
 
-func (r *RedisBackplane) OnMessage(senderId string, message interface{}) {
+func (r *RedisBackplane) OnMessage(message Message) {
 
 }
 
-func (r *RedisBackplane) OnUnregister(clientId string) {
+func (r *RedisBackplane) OnUnRegister(client *Client) {
 
 }
 
-func (r *RedisBackplane) OnRegister(clientId string) {
+func (r *RedisBackplane) OnRegister(client *Client) {
 
 }
 

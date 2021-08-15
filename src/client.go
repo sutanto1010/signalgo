@@ -45,22 +45,28 @@ type Client struct {
 	hub    *SignalGo
 	conn   *websocket.Conn
 	send   chan []byte
+	Events []string
+	Groups []string
+}
+
+func (c *Client) Clode() {
+	c.hub.CloseClient(c)
 }
 
 func (c *Client) Write(messageType int, event string, message string) {
-	data:=CreatePayload(messageType,event,message)
-	w, err:= c.conn.NextWriter(websocket.BinaryMessage)
-	if err !=nil{
-		log.Println(err)
+	data := CreatePayload(messageType, event, message)
+	w, err := c.conn.NextWriter(websocket.BinaryMessage)
+	if err != nil {
+		log.Println("Write: ", err.Error())
 	}
-	if w!=nil{
+	if w != nil {
 		w.Write(data)
 		w.Close()
 	}
 }
 
 func (c *Client) JoinGroup(group string) {
-	c.hub.groupClients[group]=append(c.hub.groupClients[group], c)
+	c.hub.groupClients[group] = append(c.hub.groupClients[group], c)
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -76,7 +82,7 @@ func (c *Client) readPump() {
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait));
+		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 	for {
@@ -88,7 +94,7 @@ func (c *Client) readPump() {
 			break
 		}
 		body = bytes.TrimSpace(bytes.Replace(body, newline, space, -1))
-		message:=Message{
+		message := Message{
 			Client: c,
 			Body:   body,
 		}
@@ -136,7 +142,6 @@ func (c *Client) writePump() {
 				return
 			}
 
-
 		case <-ticker.C:
 			//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			var t time.Time
@@ -150,7 +155,7 @@ func (c *Client) writePump() {
 }
 
 func (c *Client) SendID() {
-	payload:= CreatePayload(0,"",c.ID)
+	payload := CreatePayload(0, "", c.ID)
 	err := c.conn.WriteMessage(websocket.BinaryMessage, payload)
 	if err != nil {
 		return
@@ -162,7 +167,7 @@ func (c *Client) SendID() {
 func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	id := r.URL.Query().Get("id")
-	isNewConnection :=id==""
+	isNewConnection := id == ""
 	if id == "" {
 		idGenerator := fastuuid.MustNewGenerator()
 		id = idGenerator.Hex128()
@@ -222,5 +227,5 @@ type Payload struct {
 	MessageType int    `json:"t"`
 	Event       string `json:"e"`
 	//Can be message OR group name
-	Message     string `json:"m"`
+	Message string `json:"m"`
 }

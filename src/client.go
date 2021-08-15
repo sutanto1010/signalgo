@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -47,6 +48,7 @@ type Client struct {
 	send   chan []byte
 	Events []string
 	Groups []string
+	mu     sync.Mutex
 }
 
 func (c *Client) Clode() {
@@ -54,14 +56,18 @@ func (c *Client) Clode() {
 }
 
 func (c *Client) Write(messageType MessageType, event string, message string) {
-	data := CreatePayload(messageType, event, message)
-	w, err := c.conn.NextWriter(websocket.BinaryMessage)
-	if err != nil {
-		log.Println("Write: ", err.Error())
-	}
-	if w != nil {
-		w.Write(data)
-		w.Close()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.conn != nil {
+		data := CreatePayload(messageType, event, message)
+		w, err := c.conn.NextWriter(websocket.BinaryMessage)
+		if err != nil {
+			log.Println("Write: ", err.Error())
+		}
+		if w != nil {
+			w.Write(data)
+			w.Close()
+		}
 	}
 }
 

@@ -44,15 +44,13 @@ func (g *SignalGo) HandleIncomingMessage(msg Message) {
 		log.Println(err)
 	}
 	switch payload.MessageType {
-	case 3:
+	case EventRegistration:
 		g.eventClients[payload.Event] = append(g.eventClients[payload.Event], msg.Client)
 		msg.Client.Events = append(msg.Client.Events, payload.Event)
-		break
-	case 1:
+	case UserMessage:
 		for _, client := range g.eventClients[payload.Event] {
 			client.Write(payload.MessageType, payload.Event, payload.Message)
 		}
-		break
 	}
 }
 

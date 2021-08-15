@@ -6,7 +6,7 @@ Features:
 - [x] Binary Message Support
 - [ ] JSON Message Support
 - [ ] Protobuf Message Support
-- [ ] Redis Backplane
+- [x] Redis Backplane
   
 Clients:
 - [x] JavaScript

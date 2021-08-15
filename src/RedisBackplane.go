@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -42,8 +43,12 @@ func (r *RedisBackplane) SubscribeOnUnRegister() {
 	for msg := range pubsub.Channel() {
 		var client Client
 		json.Unmarshal([]byte(msg.Payload), &client)
-		cacheKey := client.ID
-		r.del(cacheKey + "*")
+		cacheKey := client.ID + "-events"
+		var events []string
+		err := json.Unmarshal([]byte(r.get(cacheKey)), &events)
+		if err == nil {
+			r.set(cacheKey, events, 5*time.Minute)
+		}
 	}
 	fmt.Println("SubscribeOnUnRegister stopped")
 }
@@ -58,9 +63,9 @@ func (r *RedisBackplane) get(key string) string {
 	return r.Client.Get(context.Background(), key).Val()
 }
 
-func (r *RedisBackplane) set(key string, value interface{}) {
+func (r *RedisBackplane) set(key string, value interface{}, duration time.Duration) {
 	payload, _ := json.Marshal(value)
-	r.Client.Set(context.Background(), key, string(payload), 0)
+	r.Client.Set(context.Background(), key, string(payload), duration)
 }
 func (r *RedisBackplane) del(key string) {
 	cmd := r.Client.Keys(context.Background(), key)
@@ -77,7 +82,7 @@ func (r *RedisBackplane) OnMessage(message Message) {
 	if err == nil {
 		if payload.MessageType == EventRegistration {
 			cacheKey := message.Client.ID + "-events"
-			r.set(cacheKey, message.Client.Events)
+			r.set(cacheKey, message.Client.Events, 0)
 		}
 	}
 	r.Client.Publish(context.Background(), SignalGoOnMessage, string(data))

@@ -10,12 +10,11 @@ import (
 )
 
 type RedisBackplane struct {
-	Host      string
-	Password  string
-	PrefixKey string
-	DB        int
-	Client    *redis.Client
-	sg        *SignalGo
+	Host     string
+	Password string
+	DB       int
+	Client   *redis.Client
+	sg       *SignalGo
 }
 
 const (

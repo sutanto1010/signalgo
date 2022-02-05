@@ -20,6 +20,7 @@ type SignalGo struct {
 	backplane    IBackplane
 }
 
+// Close websocket connection
 func (g *SignalGo) CloseClient(c *Client) {
 	delete(g.clients, c.ID)
 	for _, event := range c.Events {
@@ -37,6 +38,7 @@ func (g *SignalGo) CloseClient(c *Client) {
 	}
 }
 
+// Handle incoming message
 func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	var payload Payload
 	err := json.Unmarshal(msg.Body, &payload)
@@ -54,13 +56,17 @@ func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	}
 }
 
+// Send message to use (by using user id), the message can by anything (interface{})
 func (g *SignalGo) SendToUser(connectionId string, message interface{}) {
 	panic("Implement me!")
 }
+
+// Send message to group, the message can by anything (interface{})
 func (g *SignalGo) SendToGroup(group string, message interface{}) {
 	panic("Implement me!")
 }
 
+// Create new SignalGo instance
 func NewSignalGo() *SignalGo {
 	return &SignalGo{
 		SignalGoInstanceID: NewID(),
@@ -73,10 +79,12 @@ func NewSignalGo() *SignalGo {
 	}
 }
 
+// Register backplane
 func (g *SignalGo) UseBackplane(backplane IBackplane) {
 	g.backplane = backplane
 }
 
+// Start SignalGo instance
 func (g *SignalGo) Run() {
 	for {
 		select {

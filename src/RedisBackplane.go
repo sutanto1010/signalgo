@@ -23,6 +23,7 @@ const (
 	SignalGoOnUnRegister = "SignalGo-OnUnRegister"
 )
 
+// Handle one message event
 func (r *RedisBackplane) SubscribeOnMessage() {
 	pubsubCtx := context.Background()
 	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnMessage)
@@ -37,6 +38,8 @@ func (r *RedisBackplane) SubscribeOnMessage() {
 	}
 	fmt.Println("SubscribeOnMessage stopped")
 }
+
+// Handle on unregister events
 func (r *RedisBackplane) SubscribeOnUnRegister() {
 	pubsubCtx := context.Background()
 	pubsub := r.Client.Subscribe(pubsubCtx, SignalGoOnUnRegister)

@@ -1,4 +1,4 @@
-module signal-go
+module github.com/sutanto1010/signalgo
 
 go 1.15
 

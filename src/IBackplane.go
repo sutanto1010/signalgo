@@ -1,4 +1,4 @@
-package main
+package signalgo
 
 type IBackplane interface {
 	Init(sg *SignalGo)

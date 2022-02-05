@@ -1,5 +1,5 @@
 # signalgo
-`signalgo`` is a go package that can help you to make super fast and scalable real-time application. Inspired by SignalR in ASP.Net
+`signalgo` is a go package that can help you to make super fast and scalable real-time application. Inspired by SignalR in ASP.Net
 
 Features:
 - [x] Auto Retry Connection

@@ -45,7 +45,7 @@ func main() {
 	go signalGo.Run()
 	http.HandleFunc("/", serveStaticFiles)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(signalGo, w, r)
+		ServeWs(signalGo, w, r)
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

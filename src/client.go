@@ -175,7 +175,7 @@ func NewID() string {
 
 // serveWs handles websocket requests from the peer.
 
-func serveWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *SignalGo, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	id := r.URL.Query().Get("id")
 	isNewConnection := id == ""

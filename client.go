@@ -42,13 +42,14 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID     string
-	hub    *SignalGo
-	conn   *websocket.Conn
-	send   chan []byte
-	Events []string
-	Groups []string
-	mu     sync.Mutex
+	ID       string
+	hub      *SignalGo
+	conn     *websocket.Conn
+	send     chan []byte
+	Events   []string
+	Groups   []string
+	mu       sync.Mutex
+	IsClosed bool
 }
 
 func (c *Client) Clode() {
@@ -58,6 +59,9 @@ func (c *Client) Clode() {
 func (c *Client) Write(messageType MessageType, event string, message string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.IsClosed {
+		return
+	}
 	if c.conn != nil {
 		data := CreatePayload(messageType, event, message)
 		w, err := c.conn.NextWriter(websocket.BinaryMessage)
@@ -116,6 +120,7 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		c.IsClosed = true
 		fmt.Println("Closing connection")
 		ticker.Stop()
 		c.conn.Close()

@@ -245,6 +245,6 @@ type Payload struct {
 	//3=Event Registration
 	MessageType MessageType `json:"t"`
 	Event       string      `json:"e"`
-	//Can be message OR group name
+	//Can be message OR group name OR event name
 	Message string `json:"m"`
 }

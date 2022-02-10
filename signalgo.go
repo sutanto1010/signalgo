@@ -21,25 +21,25 @@ type SignalGo struct {
 }
 
 // Close websocket connection
-func (g *SignalGo) CloseClient(c *Client) {
-	delete(g.clients, c.ID)
+func (sg *SignalGo) CloseClient(c *Client) {
+	delete(sg.clients, c.ID)
 	for _, event := range c.Events {
 		var temp []*Client
-		for _, client := range g.eventClients[event] {
+		for _, client := range sg.eventClients[event] {
 			if client.ID != c.ID {
 				temp = append(temp, client)
 			}
 		}
-		g.eventClients[event] = temp
+		sg.eventClients[event] = temp
 	}
 	close(c.send)
-	if g.backplane != nil {
-		g.backplane.OnUnRegister(c)
+	if sg.backplane != nil {
+		sg.backplane.OnUnRegister(c)
 	}
 }
 
 // Handle incoming message
-func (g *SignalGo) HandleIncomingMessage(msg Message) {
+func (sg *SignalGo) HandleIncomingMessage(msg Message) {
 	var payload Payload
 	err := json.Unmarshal(msg.Body, &payload)
 	if err != nil {
@@ -47,23 +47,34 @@ func (g *SignalGo) HandleIncomingMessage(msg Message) {
 	}
 	switch payload.MessageType {
 	case EventRegistration:
-		g.eventClients[payload.Event] = append(g.eventClients[payload.Event], msg.Client)
+		sg.eventClients[payload.Event] = append(sg.eventClients[payload.Event], msg.Client)
 		msg.Client.Events = append(msg.Client.Events, payload.Event)
 	case UserMessage:
-		for _, client := range g.eventClients[payload.Event] {
+		for _, client := range sg.eventClients[payload.Event] {
 			client.Write(payload.MessageType, payload.Event, payload.Message)
 		}
 	}
 }
 
 // Send message to use (by using user id), the message can by anything (interface{})
-func (g *SignalGo) SendToUser(connectionId string, message interface{}) {
+func (sg *SignalGo) SendToUser(connectionId string, message interface{}) {
 	panic("Implement me!")
 }
 
 // Send message to group, the message can by anything (interface{})
-func (g *SignalGo) SendToGroup(group string, message interface{}) {
+func (sg *SignalGo) SendToGroup(group string, message interface{}) {
 	panic("Implement me!")
+}
+func (sg *SignalGo) SendToEvent(eventName string, message interface{}) {
+	msg, _ := json.Marshal(message)
+	payload := Payload{
+		MessageType: UserMessage,
+		Event:       eventName,
+		Message:     string(msg),
+	}
+	for _, client := range sg.eventClients[eventName] {
+		client.Write(payload.MessageType, payload.Event, payload.Message)
+	}
 }
 
 // Create new SignalGo instance

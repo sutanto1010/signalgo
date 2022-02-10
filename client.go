@@ -129,6 +129,8 @@ func (c *Client) writePump() {
 		select {
 
 		case message, ok := <-c.send:
+			c.Lock()
+			defer c.Unlock()
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -155,13 +157,14 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			c.Lock()
+			defer c.Unlock()
 			var t time.Time
 			c.conn.SetWriteDeadline(t)
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 
 				return
 			}
-			c.Unlock()
+
 		}
 	}
 }

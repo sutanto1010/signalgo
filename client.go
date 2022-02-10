@@ -42,13 +42,13 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID       string
-	hub      *SignalGo
-	conn     *websocket.Conn
-	send     chan []byte
-	Events   []string
-	Groups   []string
-	mu       sync.Mutex
+	ID     string
+	hub    *SignalGo
+	conn   *websocket.Conn
+	send   chan []byte
+	Events []string
+	Groups []string
+	sync.Mutex
 	IsClosed bool
 }
 
@@ -57,8 +57,8 @@ func (c *Client) Clode() {
 }
 
 func (c *Client) Write(messageType MessageType, event string, message string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.Lock()
+	defer c.Unlock()
 	if c.IsClosed {
 		return
 	}
@@ -141,7 +141,6 @@ func (c *Client) writePump() {
 				return
 			}
 			w.Write(message)
-
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
@@ -155,12 +154,14 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Lock()
 			var t time.Time
 			c.conn.SetWriteDeadline(t)
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 
 				return
 			}
+			c.Unlock()
 		}
 	}
 }

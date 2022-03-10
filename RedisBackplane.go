@@ -39,6 +39,7 @@ func (r *RedisBackplane) SubscribeOnMessage() {
 	fmt.Println("SubscribeOnMessage stopped")
 }
 
+//public_key = abc
 // Handle on unregister events
 func (r *RedisBackplane) SubscribeOnUnRegister() {
 	pubsubCtx := context.Background()

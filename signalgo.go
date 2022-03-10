@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+//private_key=1234
 type SignalGo struct {
 	SignalGoInstanceID string
 	// Registered clients.
